@@ -206,7 +206,7 @@ public class SimpleMySql {
                     change.append(", ");
                 }
             }
-            sql.append("UPDATE ").append(u.getTable()).append(" SET ").append(change).append(" WHERE ").append(u.getFilter()).append("; ");
+            sql.append("UPDATE ").append(database).append(".").append(u.getTable()).append(" SET ").append(change).append(" WHERE ").append(u.getFilter()).append("; ");
         }
         Statement statement = null;
         try {
