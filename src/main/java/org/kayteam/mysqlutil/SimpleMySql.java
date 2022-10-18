@@ -20,7 +20,7 @@ public class SimpleMySql {
         this.database = database;
         this.user = user;
         this.password = password;
-        String url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?user=" + user + "&password=" + password;
+        String url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?user=" + user + "&password=" + password + "?autoReconnect=true";
     }
 
     public String getHost() {
