@@ -54,6 +54,7 @@ public class SimpleMySql {
             mysqlDataSource.setDatabaseName(database);
             mysqlDataSource.setUser(user);
             mysqlDataSource.setPassword(password);
+            mysqlDataSource.setAutoReconnect(true);
             connection = mysqlDataSource.getConnection();
             if (!connection.isClosed()) System.out.println("Successfully connected to " + host + ":" + port + "/" + database);
             return true;
