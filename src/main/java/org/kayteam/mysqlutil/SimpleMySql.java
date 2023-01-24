@@ -1,7 +1,5 @@
 package org.kayteam.mysqlutil;
 
-import com.mysql.cj.jdbc.MysqlDataSource;
-
 import java.sql.*;
 
 public class SimpleMySql {
@@ -11,6 +9,7 @@ public class SimpleMySql {
     private final String database;
     private final String user;
     private final String password;
+    private final String url;
 
     private Connection connection = null;
 
@@ -20,7 +19,7 @@ public class SimpleMySql {
         this.database = database;
         this.user = user;
         this.password = password;
-        String url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?user=" + user + "&password=" + password + "?autoReconnect=true";
+        url = "jdbc:mysql://" + user + ":" + password + "@" + host + ":" + port + "/" + database + "?autoReconnect=true&useUnicode=yes";
     }
 
     public String getHost() {
@@ -48,15 +47,16 @@ public class SimpleMySql {
      */
     public boolean connect() {
         try {
-            MysqlDataSource mysqlDataSource = new MysqlDataSource();
+            /*MysqlDataSource mysqlDataSource = new MysqlDataSource();
             mysqlDataSource.setServerName(host);
             mysqlDataSource.setPort(Integer.parseInt(port));
             mysqlDataSource.setDatabaseName(database);
             mysqlDataSource.setUser(user);
             mysqlDataSource.setPassword(password);
-            mysqlDataSource.setAutoReconnect(true);
-            connection = mysqlDataSource.getConnection();
-            if (!connection.isClosed()) System.out.println("Successfully connected to " + host + ":" + port + "/" + database);
+            mysqlDataSource.setAutoReconnect(true);*/
+            connection = DriverManager.getConnection(url);
+            if (!connection.isClosed())
+                System.out.println("Successfully connected to " + host + ":" + port + "/" + database);
             return true;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -78,9 +78,10 @@ public class SimpleMySql {
     /**
      * Ejecuta una sentencia SQL
      * Ejemplo: sql.tableInsert("myTable", "name, age", "Robert", "32");
-     * @param table Nombre de la tabla
+     *
+     * @param table   Nombre de la tabla
      * @param columns Columnas a insertar
-     * @param data Datos a insertar
+     * @param data    Datos a insertar
      * @return true si se ejecuta correctamente, false si no
      */
     public boolean tableInsert(String table, String columns, String... data) {
@@ -89,7 +90,7 @@ public class SimpleMySql {
         for (String d : data) {
             sqlData.append("'").append(d).append("'");
             i++;
-            if(i != data.length) sqlData.append(", ");
+            if (i != data.length) sqlData.append(", ");
         }
         String sql = "INSERT INTO " + table + " (" + columns + ") VALUES (" + sqlData + ");";
         Statement statement = null;
@@ -101,7 +102,7 @@ public class SimpleMySql {
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
-            if(statement != null) {
+            if (statement != null) {
                 try {
                     statement.close();
                     return true;
@@ -116,6 +117,7 @@ public class SimpleMySql {
     /**
      * Ejecuta una sentencia SQL
      * Ejemplo: sql.tableInsert("myTable", "name, age", "Robert", "32");
+     *
      * @param builders Sentencias a ejecutar
      * @return true si se ejecuta correctamente, false si no
      */
@@ -127,7 +129,7 @@ public class SimpleMySql {
             for (String d : b.getData()) {
                 sqlData.append("'").append(d).append("'");
                 i++;
-                if(i != b.getData().length) sqlData.append(", ");
+                if (i != b.getData().length) sqlData.append(", ");
             }
             sql.append("INSERT INTO ").append(b.getTable()).append(" (").append(b.getColumns()).append(") VALUES (").append(sqlData).append("); ");
         }
@@ -140,7 +142,7 @@ public class SimpleMySql {
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
-            if(statement != null) {
+            if (statement != null) {
                 try {
                     statement.close();
                     return true;
@@ -155,18 +157,19 @@ public class SimpleMySql {
     /**
      * Ejecuta una consulta SQL
      * Ejemplo: sql.rowUpdate("myTable", new UpdateValue("age", "45"), "name = 'Robert'");
-     * @param table Tabla a consultar
-     * @param value Valor a buscar
+     *
+     * @param table  Tabla a consultar
+     * @param value  Valor a buscar
      * @param filter Campo a filtrar
      * @return Resultado de la consulta
      */
     public boolean rowUpdate(String table, UpdateValue value, String filter) {
         StringBuilder change = new StringBuilder();
         int i = 0;
-        for(String key : value.getKeys()) {
+        for (String key : value.getKeys()) {
             change.append(key).append(" = '").append(value.get(key)).append("'");
             i++;
-            if(i != value.getKeys().size()) change.append(", ");
+            if (i != value.getKeys().size()) change.append(", ");
         }
         String sql = "UPDATE " + table + " SET " + change + " WHERE " + filter + ";";
         Statement statement = null;
@@ -192,6 +195,7 @@ public class SimpleMySql {
     /**
      * Ejecuta una consulta SQL
      * Ejemplo: sql.rowUpdate(UpdateValue("age", "45"));
+     *
      * @param builders Sentencias a ejecutar
      * @return true si se ejecuta correctamente, false si no
      */
@@ -200,10 +204,10 @@ public class SimpleMySql {
         for (Update u : builders) {
             StringBuilder change = new StringBuilder();
             int i = 0;
-            for(String key : u.getValue().getKeys()) {
+            for (String key : u.getValue().getKeys()) {
                 change.append(key).append(" = '").append(u.getValue().get(key)).append("'");
                 i++;
-                if(i != u.getValue().getKeys().size()) {
+                if (i != u.getValue().getKeys().size()) {
                     change.append(", ");
                 }
             }
@@ -232,15 +236,16 @@ public class SimpleMySql {
     /**
      * Ejecuta una sentencia SQL
      * Ejemplo: sql.rowSelect("myTable", "*", "name = 'Robert'");
-     * @param table Tabla a la que se va a conectar
+     *
+     * @param table   Tabla a la que se va a conectar
      * @param columns Columnas a las que se va a conectar
-     * @param filter Filtro a aplicar
+     * @param filter  Filtro a aplicar
      * @return Resultado de la sentencia
      */
     public Result rowSelect(String table, String columns, String filter) {
-        if(columns == null || columns.equals("")) columns = "*";
+        if (columns == null || columns.equals("")) columns = "*";
         String sql = "SELECT " + columns + " FROM " + table;
-        if(filter != null && !filter.equals("")) sql = sql + " WHERE " + filter;
+        if (filter != null && !filter.equals("")) sql = sql + " WHERE " + filter;
         sql = sql + ";";
 
         Statement statement;
@@ -251,7 +256,7 @@ public class SimpleMySql {
             resultSet = statement.executeQuery(sql);
             ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
             Result result = new Result();
-            while(resultSet.next()) {
+            while (resultSet.next()) {
                 Row row = new Row();
                 int i = 1;
                 boolean bound = true;
@@ -276,6 +281,7 @@ public class SimpleMySql {
     /**
      * Ejecuta una sentencia SQL
      * Ejemplo: sql.rowSelect("myTable", "*", "name = 'Robert'");
+     *
      * @param select Sentencia a ejecutar
      * @return Resultado de la sentencia
      */
@@ -283,13 +289,13 @@ public class SimpleMySql {
         String sql = "";
         String columns;
         String lsql;
-        if(select.getColumns() == null || select.getColumns().equals("")) {
+        if (select.getColumns() == null || select.getColumns().equals("")) {
             columns = "*";
         } else {
             columns = select.getColumns();
         }
         lsql = "SELECT " + columns + " FROM " + select.getTable();
-        if(select.getFilter() != null && !select.getFilter().equals("")) {
+        if (select.getFilter() != null && !select.getFilter().equals("")) {
             lsql = lsql + " WHERE " + select.getFilter();
         }
         lsql = lsql + "; ";
@@ -302,7 +308,7 @@ public class SimpleMySql {
             resultSet = statement.executeQuery(sql);
             ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
             Result result = new Result();
-            while(resultSet.next()) {
+            while (resultSet.next()) {
                 Row row = new Row();
                 int i = 1;
                 boolean bound = true;
@@ -325,7 +331,7 @@ public class SimpleMySql {
 
     public boolean rowDelete(String table, String filter) {
         String sql = "DELETE FROM " + table;
-        if(filter != null && !filter.equals("")) sql = sql + " WHERE " + filter;
+        if (filter != null && !filter.equals("")) sql = sql + " WHERE " + filter;
         sql = sql + ";";
         Statement statement;
         try {
@@ -341,7 +347,8 @@ public class SimpleMySql {
 
     /**
      * Crear una tabla en la base de datos
-     * @param table Nombre de la tabla
+     *
+     * @param table   Nombre de la tabla
      * @param columns Columnas de la tabla
      * @return Verdadero si la tabla fue creada, falso en caso contrario
      */
