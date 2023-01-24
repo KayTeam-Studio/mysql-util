@@ -19,7 +19,9 @@ public class SimpleMySql {
         this.database = database;
         this.user = user;
         this.password = password;
-        url = "jdbc:mysql://" + user + ":" + password + "@" + host + ":" + port + "/" + database + "?autoReconnect=true&useUnicode=yes";
+        //url = "jdbc:mysql://" + user + ":" + password + "@" + host + ":" + port + "/" + database + "?autoReconnect=true&useUnicode=yes";
+        url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?autoReconnect=true&useUnicode=yes";
+        System.out.println("MySql connection loaded");
     }
 
     public String getHost() {
@@ -54,7 +56,7 @@ public class SimpleMySql {
             mysqlDataSource.setUser(user);
             mysqlDataSource.setPassword(password);
             mysqlDataSource.setAutoReconnect(true);*/
-            connection = DriverManager.getConnection(url);
+            connection = DriverManager.getConnection(url, user, password);
             if (!connection.isClosed())
                 System.out.println("Successfully connected to " + host + ":" + port + "/" + database);
             return true;
